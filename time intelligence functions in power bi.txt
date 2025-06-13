@@ -1,0 +1,392 @@
+DEFINE
+    MEASURE 'List of Measures'[Net Revenue] = CALCULATE(SUM(Miller[Net Revenue]), Miller[REVENUE_TYPE] ="ACTL" && Miller[ORDER_STATUS] = "Invoiced")
+    MEASURE 'List of Measures'[DynamicNet Revenue] = VAR SelectedRange = SELECTEDVALUE('TimePeriodSelection'[Period])
+VAR MaxDate =EOMONTH( CALCULATE(
+    MAX(Miller[REVENUE_DATE]),Miller[REVENUE_TYPE] = "ACTL",    ALLSELECTED(Miller)
+),0)
+VAR MinPeriod = 
+    SWITCH(
+        SelectedRange,
+        "1M", EDATE(MaxDate, -1)+1,
+        "3M", EDATE(MaxDate, -3)+1,
+        "6M", EDATE(MaxDate, -6)+1,
+        "1Y", EDATE(MaxDate, -12)+1,
+        "2Y", EDATE(MaxDate, -24)+1,
+        "MAX", CALCULATE(MIN(Miller[REVENUE_DATE]), ALL(Miller))
+    )
+var result=
+CALCULATE(
+    [Net Revenue],
+    FILTER(
+        ('Date'),
+        'Date'[Date] >= MinPeriod && 'Date'[Date] <= MaxDate
+    )
+)
+RETURN
+result
+    MEASURE 'List of Measures'[Base CY Value] = VAR NetRevenueBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Net Revenue] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+VAR SalesVolumeBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Volume (stons)] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+var SalesVolumeMton = CALCULATE (
+        SUM ( 'Miller'[Volume (mtons)] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+
+VAR FreightExpenseBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Freight Expense] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+VAR COGSBudget =
+    CALCULATE (
+        SUM ( 'Miller'[COGS @ Std] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+VAR StandardGrossMarginBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Standard Gross Margin (SGM)] ),
+              'Miller'[REVENUE_TYPE] = "ACTL"
+            && 'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+
+RETURN
+    SWITCH (
+        SELECTEDVALUE ( 'KPI Table'[KPI Name]),
+        "Net Revenue", NetRevenueBudget,
+        "Sales Volume (stons)", SalesVolumeBudget,
+		"Sales Volume (mtons)", SalesVolumeMton,
+        "COGS @ Std", COGSBudget,
+        "Standard Gross Margin", StandardGrossMarginBudget,
+        BLANK ()
+    )
+    MEASURE 'List of Measures'[CY MTD] = VAR MaxSourceDate =
+    CALCULATE (
+        MAX ( 'Miller'[REVENUE_DATE] ),
+        ALLSELECTED ( 'Miller' ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+
+VAR MaxYear = YEAR ( MaxSourceDate )
+VAR MaxMonth = MONTH ( MaxSourceDate )
+VAR MaxDay = DAY ( MaxSourceDate )
+
+VAR NetRevenueMTD =
+    CALCULATE (
+        SUM ( 'Miller'[Net Revenue] ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced",
+        FILTER (
+            'Date',
+            'Date'[Year] = MaxYear &&
+            'Date'[Month Number] = MaxMonth &&
+            'Date'[Day] <= MaxDay
+        )
+    )
+
+VAR SalesVolumeStonMTD =
+    CALCULATE (
+        SUM ( 'Miller'[Volume (stons)] ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced",
+        FILTER (
+            'Date',
+            'Date'[Year] = MaxYear &&
+            'Date'[Month Number] = MaxMonth &&
+            'Date'[Day] <= MaxDay
+        )
+    )
+
+VAR SalesVolumeMtonMTD =
+    CALCULATE (
+        SUM ( 'Miller'[Volume (mtons)] ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced",
+        FILTER (
+            'Date',
+            'Date'[Year] = MaxYear &&
+            'Date'[Month Number] = MaxMonth &&
+            'Date'[Day] <= MaxDay
+        )
+    )
+VAR StandardGrossMarginBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Standard Gross Margin (SGM)] ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced",
+        FILTER (
+            'Date',
+            'Date'[Year] = MaxYear &&
+            'Date'[Month Number] = MaxMonth &&
+            'Date'[Day] <= MaxDay
+        )
+    )
+
+RETURN
+    SWITCH (
+        SELECTEDVALUE ( 'KPI Table'[KPI Name] ),
+        "Net Revenue", NetRevenueMTD,
+        "Sales Volume (stons)", SalesVolumeStonMTD,
+        "Sales Volume (mtons)", SalesVolumeMtonMTD,
+        "Standard Gross Margin", StandardGrossMarginBudget,
+        BLANK ()
+    )
+    MEASURE 'List of Measures'[Base OP&B] = VAR NetRevenueBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Net Revenue] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+VAR SalesVolumeBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Volume (stons)] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+var SalesVolumeMton = CALCULATE (
+        SUM ( 'Miller'[Volume (mtons)] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+
+VAR FreightExpenseBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Freight Expense] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+VAR COGSBudget =
+    CALCULATE (
+        SUM ( 'Miller'[COGS @ Std] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+VAR StandardGrossMarginBudget =
+    CALCULATE (
+        SUM ( 'Miller'[Standard Gross Margin (SGM)] ),
+              'Miller'[REVENUE_TYPE] = "op&b"
+               )
+RETURN
+    SWITCH (
+        SELECTEDVALUE ( 'KPI Table'[KPI Name]),
+        "Net Revenue", NetRevenueBudget,
+        "Sales Volume (stons)", SalesVolumeBudget,
+		"Sales Volume (mtons)", SalesVolumeMton,
+        "COGS @ Std", COGSBudget,
+        "Standard Gross Margin", StandardGrossMarginBudget,
+        BLANK ()
+    )
+    MEASURE 'List of Measures'[OP&B MTD] = VAR MaxDate =
+    CALCULATE(
+        MAX('Miller'[REVENUE_DATE]),
+        'Miller'[REVENUE_TYPE] = "ACTL" &&
+        'Miller'[ORDER_STATUS] = "Invoiced", ALLSELECTED(Miller)
+    )
+
+VAR CurrentYear = YEAR(MaxDate)
+VAR CurrentMonth = MONTH(MaxDate)
+VAR EndOfMonth_ = EOMONTH(MaxDate, 0)
+VAR CurrentDay = DAY(EndOfMonth_)  -- Total number of days in month
+VAR datecheck = CALCULATE(MAX('Date'[Date]), KEEPFILTERS('Date'[Date]<=MaxDate))
+VAR MonthlyValue =
+    CALCULATE (
+        [Base OP&B],
+        FILTER (
+            ALLSELECTED('Date'),
+            'Date'[Year] = CurrentYear &&
+            'Date'[Month Number] = CurrentMonth
+        )
+    )
+
+VAR MaxSourceDate =
+    CALCULATE (
+        MAX ( 'Miller'[REVENUE_DATE] ),
+        ALLSELECTED ( 'Miller' ),
+        'Miller'[REVENUE_TYPE] = "ACTL",
+        'Miller'[ORDER_STATUS] = "Invoiced"
+    )
+return
+CALCULATE (
+    DIVIDE(MonthlyValue, CurrentDay) * MAX('Date'[Day]),
+    FILTER (
+        'Date',
+        'Date'[Year] = CurrentYear &&
+        'Date'[Month Number] = CurrentMonth &&
+        'Date'[Date]<=datecheck
+    )
+)
+    MEASURE 'List of Measures'[PY MTD] = CALCULATE([CY MTD], SAMEPERIODLASTYEAR('Date'[Date]), 'Date'[Flag]  ="Y")
+    MEASURE 'List of Measures'[Title1] = "MTD " & SELECTEDVALUE('KPI Table'[KPI Name])& " Progress Comparison"
+    MEASURE 'List of Measures'[RT CY MTD] = VAR MaxActualDate =
+    CALCULATE (
+        MAX ( Miller[REVENUE_DATE] ),
+        FILTER (
+            ALLSELECTED( Miller ),
+            Miller[REVENUE_TYPE] = "ACTL"
+                && Miller[ORDER_STATUS] = "INVOICED"
+        )
+    )
+VAR datecheck = CALCULATE(MAX('Date'[Date]), KEEPFILTERS('Date'[Date]<=MaxActualDate))
+VAR MonthStartDate = DATE ( YEAR ( MaxActualDate ), MONTH ( MaxActualDate ), 1 )
+
+RETURN 
+
+    CALCULATE (
+        [Base CY Value],
+        FILTER (
+            ALLSELECTED ( 'Date' ),
+            'Date'[Date] >= MonthStartDate &&
+            'Date'[Date] <= MAX ( 'Date'[Date] ) &&
+            'Date'[Date] <= datecheck &&
+            MONTH ( 'Date'[Date] ) = MONTH ( MaxActualDate ) &&
+            YEAR ( 'Date'[Date] ) = YEAR ( MaxActualDate )
+        )
+    )
+    MEASURE 'List of Measures'[RT PY MTD] = VAR MaxActualDate =
+    CALCULATE (
+        MAX ( Miller[REVENUE_DATE] ),
+        FILTER (
+            ALLSELECTED ( Miller ),
+            Miller[REVENUE_TYPE] = "ACTL"
+                && Miller[ORDER_STATUS] = "INVOICED"
+        )
+    )
+
+VAR MonthStartDate = DATE ( YEAR ( MaxActualDate ), MONTH ( MaxActualDate ), 1 )
+VAR datecheck = CALCULATE(MAX('Date'[Date]), KEEPFILTERS('Date'[Date]<=MaxActualDate))
+RETURN
+CALCULATE (
+    [PY MTD],
+    FILTER (
+        ALLSELECTED ( 'Date' ),
+        'Date'[Date] >= MonthStartDate &&
+        'Date'[Date] <= MAX ( 'Date'[Date] ) &&
+        'Date'[Date] <= datecheck &&
+        MONTH ( 'Date'[Date] ) = MONTH ( MaxActualDate ) &&
+        YEAR ( 'Date'[Date] ) = YEAR ( MaxActualDate )
+    )
+)
+    MEASURE 'List of Measures'[Base PY Value] = CALCULATE([Base CY Value], SAMEPERIODLASTYEAR('Date'[Date]))
+    MEASURE 'List of Measures'[% Change to OP&B MTD] = DIVIDE ( [CY MTD], [OP&B MTD] ) - 1
+    MEASURE 'List of Measures'[% Change to PY MTD] = DIVIDE ( [CY MTD], [PY MTD] ) - 1
+    MEASURE 'List of Measures'[CF % TO OP&B] = IF([% Change to OP&B MTD]<0,"RED","GREEN")
+    MEASURE 'List of Measures'[CF % Change to PY] = IF([% Change to PY MTD]>0,"green","red")
+    MEASURE 'List of Measures'[RT CY YTD] = VAR MaxActualDate =
+    CALCULATE (
+        MAX ( Miller[REVENUE_DATE] ),
+        FILTER (
+            ALLSELECTED( Miller ),
+            Miller[REVENUE_TYPE] = "ACTL"
+                && Miller[ORDER_STATUS] = "INVOICED"
+        )
+    )
+VAR datecheck = CALCULATE(MAX('Date'[Date]), KEEPFILTERS('Date'[Date]<=MaxActualDate))
+VAR MonthStartDate = DATE ( YEAR ( MaxActualDate ), 1, 1 )
+
+RETURN 
+
+    CALCULATE (
+        [Base CY Value],
+        FILTER (
+            ALLSELECTED ( 'Date' ),
+            'Date'[Date] >= MonthStartDate &&
+            'Date'[Date] <= MAX ( 'Date'[Date] ) &&
+            'Date'[Date] <= datecheck &&            
+            YEAR ( 'Date'[Date] ) = YEAR ( MaxActualDate )
+        )
+    )
+    MEASURE 'List of Measures'[RT PY YTD] = VAR MaxActualDate =
+    CALCULATE (
+        MAX ( Miller[REVENUE_DATE] ),
+        FILTER (
+            ALLSELECTED ( Miller ),
+            Miller[REVENUE_TYPE] = "ACTL"
+                && Miller[ORDER_STATUS] = "INVOICED"
+        )
+    )
+
+VAR MonthStartDate = DATE ( YEAR ( MaxActualDate ), 1, 1 )
+VAR datecheck = CALCULATE(MAX('Date'[Date]), KEEPFILTERS('Date'[Date]<=MaxActualDate))
+RETURN
+CALCULATE (
+    [Base PY Value],
+    FILTER (
+        ALLSELECTED ( 'Date' ),
+        'Date'[Date] >= MonthStartDate &&
+        'Date'[Date] <= MAX ( 'Date'[Date] ) &&
+        'Date'[Date] <= datecheck &&
+        YEAR ( 'Date'[Date] ) = YEAR ( MaxActualDate )
+    )
+)
+    MEASURE 'List of Measures'[OP&B YTD] = VAR MaxDate =
+    CALCULATE (
+        MAX ( 'Miller'[REVENUE_DATE] ),
+        FILTER (
+            ALLSELECTED ( 'Miller' ),
+            'Miller'[REVENUE_TYPE] = "ACTL" &&
+            'Miller'[ORDER_STATUS] = "Invoiced"
+        )
+    )
+
+VAR CurrentYear = YEAR(MaxDate)
+
+var EOMdate = EOMONTH(MaxDate,0)
+VAR DaysElapsed = 
+    CALCULATE (
+        MAX('Date'[Day of Year]),
+        FILTER('Date', 'Date'[Date] <= MaxDate && 'Date'[Year] = CurrentYear)
+    )
+
+
+VAR TotalDaysInYear = 
+    CALCULATE (
+        MAX('Date'[Day of Year]),
+        FILTER(all('Date'), 'Date'[Year] = CurrentYear && 'Date'[Date] <= EOMdate)
+    )
+
+-- Full year OP&B value
+VAR TotalOPBYear = 
+    CALCULATE (
+        [Base OP&B],
+        FILTER (
+            ALLSELECTED('Date'),
+            'Date'[Day of Year] <= TotalDaysInYear
+        )
+    )
+
+-- Final YTD based on proportion
+RETURN 
+DIVIDE(TotalOPBYear * DaysElapsed, TotalDaysInYear)
+    MEASURE 'List of Measures'[% Change to OP&B YTD] = DIVIDE ( [RT CY YTD], [OP&B YTD] ) - 1
+    MEASURE 'List of Measures'[% Change to PY YTD] = DIVIDE ( [RT CY YTD], [RT PY YTD] ) - 1
+
+EVALUATE
+    SUMMARIZECOLUMNS(
+        "Net Revenue", [Net Revenue],
+        "DynamicNet Revenue", [DynamicNet Revenue],
+        "Base CY Value", [Base CY Value],
+        "CY MTD", [CY MTD],
+        "Base OP&B", [Base OP&B],
+        "OP&B MTD", [OP&B MTD],
+        "PY MTD", [PY MTD],
+        "Title1", [Title1],
+        "RT CY MTD", [RT CY MTD],
+        "RT PY MTD", [RT PY MTD],
+        "Base PY Value", [Base PY Value],
+        "% Change to OP&B MTD", [% Change to OP&B MTD],
+        "% Change to PY MTD", [% Change to PY MTD],
+        "CF % TO OP&B", [CF % TO OP&B],
+        "CF % Change to PY", [CF % Change to PY],
+        "RT CY YTD", [RT CY YTD],
+        "RT PY YTD", [RT PY YTD],
+        "OP&B YTD", [OP&B YTD],
+        "% Change to OP&B YTD", [% Change to OP&B YTD],
+        "% Change to PY YTD", [% Change to PY YTD]
+    )
